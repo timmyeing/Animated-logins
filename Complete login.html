@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Authentication Portal</title>
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --card-bg: rgba(13, 20, 35, 0.65);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary-neon: #6366f1;
+      --secondary-neon: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: var(--bg-dark);
+      overflow: hidden;
+      perspective: 1000px;
+    }
+
+    /* Ambient Background Mesh */
+    .mesh-gradient {
+      position: absolute;
+      width: 140vw;
+      height: 140vh;
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 90% 10%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+        radial-gradient(at 50% 80%, rgba(30, 41, 59, 0.5) 0px, transparent 50%);
+      filter: blur(40px);
+      z-index: 1;
+      animation: rotateMesh 25s infinite linear;
+    }
+
+    @keyframes rotateMesh {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Portal Container */
+    .portal-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 850px;
+      height: 550px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Form Section Layout */
+    .form-section {
+      width: 50%;
+      height: 100%;
+      padding: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s;
+    }
+
+    .login-area {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .register-area {
+      position: absolute;
+      right: 0;
+      top: 0;
+      transform: translateX(100px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Active Dynamic States */
+    .portal-wrapper.show-register .login-area {
+      transform: translateX(-100px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .portal-wrapper.show-register .register-area {
+      position: relative;
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Dynamic Visual Panel Slider */
+    .interactive-panel {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+      border-left: 1px solid var(--border-color);
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      text-align: center;
+      z-index: 15;
+    }
+
+    .portal-wrapper.show-register .interactive-panel {
+      transform: translateX(-100%);
+      border-left: none;
+      border-right: 1px solid var(--border-color);
+    }
+
+    /* UI Elements styling */
+    h2 {
+      color: var(--text-main);
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 32px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      outline: none;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary-neon);
+      background: rgba(99, 102, 241, 0.05);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    }
+
+    /* Action Elements */
+    .action-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(90deg, var(--primary-neon), var(--secondary-neon));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .action-btn:hover {
+      box-shadow: 0 8px 24px rgba(168, 85, 247, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .switch-prompt {
+      color: var(--text-main);
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .ghost-btn {
+      padding: 10px 24px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 30px;
+      color: var(--text-main);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .ghost-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text-main);
+    }
+
+    /* Responsive Viewport Optimizations */
+    @media (max-width: 900px) {
+      .portal-wrapper { width: 400px; height: auto; flex-direction: column; }
+      .form-section { width: 100%; padding: 40px 30px; }
+      .interactive-panel { display: none; }
+      .register-area { position: absolute; }
+      .portal-wrapper.show-register .login-area { display: none; }
+      .portal-wrapper.show-register .register-area { position: relative; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mesh-gradient"></div>
+
+  <div class="portal-wrapper" id="portalContainer">
+    
+    <!-- Sign In Panel View -->
+    <div class="form-section login-area">
+      <h2>Welcome Back</h2>
+      <p class="subtitle">Access your security profile dashboard.</p>
+      <form onsubmit="event.preventDefault();">
+        <div class="input-group">
+          <input type="text" placeholder="Username or Email" required autocomplete="off">
+        </div>
+        <div class="input-group">
+          <input type="password" placeholder="Password" required>
+        </div>
+        <button type="submit" class="action-btn">Authenticate</button>
+      </form>
+    </div>
+
+    <!-- Sign Up Panel View -->
+    <div class="form-section register-area">
+      <h2>Create Account</h2>
+      <p class="subtitle">Join our developer ecosystem today.</p>
+      <form onsubmit="event.preventDefault();">
+        <div class="input-group">
+          <input type="text" placeholder="Full Name" required autocomplete="off">
+        </div>
+        <div class="input-group">
+          <input type="email" placeholder="Email Address" required autocomplete="off">
+        </div>
+        <div class="input-group">
+          <input type="password" placeholder="Secure Password" required>
+        </div>
+        <button type="submit" class="action-btn">Sign in</button>
+      </form>
+    </div>
+
+    <!-- Desktop Sliding Switch Cover Canvas -->
+    <div class="interactive-panel">
+      <div id="panelContent">
+        <p class="switch-prompt" id="panelText">New to the platform?</p>
+        <button class="ghost-btn" id="togglePortalBtn" onclick="togglePortalView()">Sign Up</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const wrapper = document.getElementById('portalContainer');
+    const panelText = document.getElementById('panelText');
+    const toggleBtn = document.getElementById('togglePortalBtn');
+
+    function togglePortalView() {
+      const isRegistering = wrapper.classList.toggle('show-register');
+      
+      // Update the contextual helper button text smoothly
+      if(isRegistering) {
+        panelText.textContent = "Already verified?";
+        toggleBtn.textContent = "Sign In";
+      } else {
+        panelText.textContent = "New to the platform?";
+        toggleBtn.textContent = "Sign Up";
+      }
+    }
+  </script>
+</body>
+  </html>
+  
